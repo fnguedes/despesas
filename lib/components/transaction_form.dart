@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-class TransactionForm extends StatelessWidget {
+class TransactionForm extends StatefulWidget {
   TransactionForm(this.onSubmit, {super.key});
 
+  final void Function(String, double, DateTime) onSubmit;
+
+  @override
+  State<TransactionForm> createState() => _TransactionFormState();
+}
+
+class _TransactionFormState extends State<TransactionForm> {
   final titleController = TextEditingController();
   final valueController = TextEditingController();
-
-  final void Function(String, double) onSubmit;
+  DateTime _selectedDate = DateTime.now();
 
   _submitForm() {
     final title = titleController.text;
@@ -14,7 +21,27 @@ class TransactionForm extends StatelessWidget {
     if (title.isEmpty || value <= 0) {
       return;
     }
-    onSubmit(title, value);
+    widget.onSubmit(title, value, _selectedDate);
+  }
+
+  _showDatePicker() {
+    showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2019),
+      lastDate: DateTime.now(),
+    ).then((pickedDate) {
+      if (pickedDate == null) {
+        return;
+      }
+      setState(() {
+        _selectedDate = pickedDate;
+      });
+    });
+
+    setState(() {
+      _selectedDate = DateTime.now();
+    });
   }
 
   @override
@@ -37,13 +64,39 @@ class TransactionForm extends StatelessWidget {
               onSubmitted: (_) => _submitForm(),
               keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
-            TextButton(
-                child: Text('Nova Transação',
-                    style: TextStyle(
-                        color: Colors.purple,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18)),
-                onPressed: _submitForm),
+            Container(
+              margin: EdgeInsets.symmetric(vertical: 15),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(DateFormat('dd/MM/y').format(_selectedDate)),
+                  TextButton(
+                    child: Text(
+                      'Selecionar Data',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    onPressed: () => _showDatePicker(),
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Container(
+                  margin: EdgeInsets.only(top: 5),
+                  padding: EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: TextButton(
+                      onPressed: _submitForm,
+                      child: Text('Nova Transação',
+                          style: Theme.of(context).textTheme.labelLarge)),
+                ),
+              ],
+            ),
           ],
         ),
       ),
